@@ -90,21 +90,52 @@
 </div>
 
 <div class="row-fluid">
-        <div class="span8 offset2 article-content">
+    <div class="span2 table-of-content">
+        <nav>
+        <h4>Contents</h4>
+        <div class="toc">
+<ul>
+<li><a href="#mathematical-background">Mathematical Background</a><ul>
+<li><a href="#covariance-of-a-random-material-field">Covariance of a Random Material Field</a></li>
+<li><a href="#variograms-and-their-relation-to-covariance">Variograms and Their Relation to Covariance</a></li>
+<li><a href="#eigenvalue-problem-and-the-karhunenloeve-expansion">Eigenvalue Problem and the Karhunen–Loève Expansion</a></li>
+<li><a href="#python-workflow">Python Workflow</a></li>
+</ul>
+</li>
+<li><a href="#visualizing-the-covariance-structure">Visualizing the Covariance Structure</a><ul>
+<li><a href="#3d-covariance-surface">3D Covariance Surface</a></li>
+<li><a href="#2d-covariance-heatmap">2D Covariance Heatmap</a></li>
+<li><a href="#eigenvalue-spectrum-with-truncation">Eigenvalue Spectrum with Truncation</a></li>
+<li><a href="#first-six-eigenvector-surfaces">First Six Eigenvector Surfaces</a></li>
+<li><a href="#first-segment-of-eigenvectors">First Segment of Eigenvectors</a></li>
+</ul>
+</li>
+<li><a href="#interpretation-of-results">Interpretation of Results</a><ul>
+<li><a href="#covariance-matrix-structure">Covariance Matrix Structure</a></li>
+<li><a href="#eigenvalue-decay-and-truncation">Eigenvalue Decay and Truncation</a></li>
+<li><a href="#eigenvector-shapes">Eigenvector Shapes</a></li>
+</ul>
+</li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+</div>
+        </nav>
+    </div>
+    <div class="span8 article-content">
             
-            <h2 style="text-align: center;">
-Covariance Matrices in Computational Mechanics:<br>
+            
+<h2 style="text-align: center;">
+Covariance Matrices in Computational Mechanics:<br/>
 From Spatial Variability to Eigenmodes
 </h2>
-
-<p>Spatial variability is an unavoidable feature of real engineering materials.<br>
+<p>Spatial variability is an unavoidable feature of real engineering materials.<br/>
 Whether we are dealing with concrete, rock, biological tissue, or additively manufactured metals, the <strong>Young's modulus field</strong> is rarely uniform. Instead, it fluctuates across space due to microstructural heterogeneity, defects, porosity, or manufacturing inconsistencies.</p>
-<p>In computational mechanics, these fluctuations are often modeled as a <strong>random field</strong>.<br>
+<p>In computational mechanics, these fluctuations are often modeled as a <strong>random field</strong>.<br/>
 To describe such a field mathematically, the central object is the <strong>covariance function</strong>:</p>
 <div class="math">$$
 C(\mathbf{x}, \mathbf{x}') = \mathrm{Cov}[E(\mathbf{x}), E(\mathbf{x}')]
 $$</div>
-<p>This function tells us how strongly the Young's modulus at point <span class="math">\(\mathbf{x}\)</span> correlates with the modulus at another point <span class="math">\(\mathbf{x}'\)</span>.<br>
+<p>This function tells us how strongly the Young's modulus at point <span class="math">\(\mathbf{x}\)</span> correlates with the modulus at another point <span class="math">\(\mathbf{x}'\)</span>.<br/>
 Once discretized over a mesh, this becomes a <strong>covariance matrix</strong>, which plays a foundational role in:</p>
 <ul>
 <li>stochastic finite element methods (SFEM)</li>
@@ -122,10 +153,10 @@ Once discretized over a mesh, this becomes a <strong>covariance matrix</strong>,
 <li>visualizing the covariance structure and eigenmodes</li>
 </ol>
 <p>All computations are performed using Python, NumPy, SciPy, and GSTools.</p>
-<hr>
-<h3>1. Mathematical Background</h3>
-<h4>1.1 Covariance of a Random Material Field</h4>
-<p>Let <span class="math">\(E(\mathbf{x})\)</span> denote the Young's modulus at location <span class="math">\(\mathbf{x}\)</span>.<br>
+<hr/>
+<h3 id="mathematical-background"><a class="toclink" href="#mathematical-background">Mathematical Background</a></h3>
+<h4 id="covariance-of-a-random-material-field"><a class="toclink" href="#covariance-of-a-random-material-field">Covariance of a Random Material Field</a></h4>
+<p>Let <span class="math">\(E(\mathbf{x})\)</span> denote the Young's modulus at location <span class="math">\(\mathbf{x}\)</span>.<br/>
 The covariance function is defined as:</p>
 <div class="math">$$
 C(\mathbf{x}, \mathbf{x}') = \mathbb{E}\left[(E(\mathbf{x}) - \mu)(E(\mathbf{x}') - \mu)\right]
@@ -135,8 +166,8 @@ $$</div>
 C(\mathbf{x}, \mathbf{x}') = C(h), \qquad h = \|\mathbf{x} - \mathbf{x}'\|
 $$</div>
 <p>This assumption is common in stochastic mechanics and simplifies modeling considerably.</p>
-<hr>
-<h4>1.2 Variograms and Their Relation to Covariance</h4>
+<hr/>
+<h4 id="variograms-and-their-relation-to-covariance"><a class="toclink" href="#variograms-and-their-relation-to-covariance">Variograms and Their Relation to Covariance</a></h4>
 <p>A widely used tool in geostatistics and random field modeling is the <strong>variogram</strong>:</p>
 <div class="math">$$
 \gamma(h) = \frac{1}{2}\mathbb{E}\left[(E(\mathbf{x}) - E(\mathbf{x}+h))^2\right]
@@ -156,8 +187,8 @@ $$</div>
 <li><span class="math">\(\alpha\)</span> controls smoothness</li>
 </ul>
 <p>This model is flexible and widely used in random field generation.</p>
-<hr>
-<h4>1.3 Eigenvalue Problem and the Karhunen–Loève Expansion</h4>
+<hr/>
+<h4 id="eigenvalue-problem-and-the-karhunenloeve-expansion"><a class="toclink" href="#eigenvalue-problem-and-the-karhunenloeve-expansion">Eigenvalue Problem and the Karhunen–Loève Expansion</a></h4>
 <p>Once the covariance matrix <span class="math">\(\mathbf{C}\)</span> is assembled, we solve:</p>
 <div class="math">$$
 \mathbf{C}\,\phi_i = \lambda_i \phi_i
@@ -172,8 +203,8 @@ $$</div>
 E(\mathbf{x}) \approx \mu + \sum_{i=1}^{n} \sqrt{\lambda_i}\,\phi_i(\mathbf{x})\,\xi_i
 $$</div>
 <p>This is the <strong>Karhunen–Loève expansion (KLE)</strong>, a cornerstone of stochastic mechanics.</p>
-<hr>
-<h4>Python Workflow</h4>
+<hr/>
+<h4 id="python-workflow"><a class="toclink" href="#python-workflow">Python Workflow</a></h4>
 <p>Below is an annotated Python script used to compute and plot the covariance matrix and its eigenmodes.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">gstools</span> <span class="k">as</span> <span class="nn">gs</span>
@@ -190,12 +221,12 @@ $$</div>
 
 <span class="c1"># Create full grid of coordinates</span>
 <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">xi</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">yi</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="s1">'F'</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="s1">'F'</span><span class="p">)</span>
 <span class="n">locations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span>
 <span class="n">A</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">locations</span><span class="p">)</span>
 
-<span class="c1"># Define variogram model for Young&#39;s modulus field</span>
+<span class="c1"># Define variogram model for Young's modulus field</span>
 <span class="n">variogram_model</span> <span class="o">=</span> <span class="n">gs</span><span class="o">.</span><span class="n">Rational</span><span class="p">(</span>
     <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">var</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">len_scale</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.14</span><span class="p">,</span> <span class="n">nugget</span><span class="o">=</span><span class="mf">0.0</span>
 <span class="p">)</span>
@@ -220,28 +251,34 @@ $$</div>
 <span class="n">target</span> <span class="o">=</span> <span class="mf">0.975</span> <span class="o">*</span> <span class="n">total</span>
 <span class="n">n_terms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">target</span><span class="p">)</span>
 </code></pre></div>
-
-<hr>
-<h3>3. Visualizing the Covariance Structure</h3>
-<h4>3D Covariance Surface</h4>
-<p><img alt="3D Covariance Matrix" src="images/covariance_3d.png"></p>
-<h4>2D Covariance Heatmap</h4>
-<p><img alt="2D Covariance Heatmap" src="images/covariance_2d.png"></p>
-<h4>Eigenvalue Spectrum with Truncation</h4>
-<p><img alt="Eigenvalue Spectrum" src="images/eigenvalue_spectrum.png"></p>
-<h4>First Six Eigenvector Surfaces</h4>
-<p><img alt="First Six Eigenvector Surfaces" src="images/eigenvectors_surfaces.png"></p>
-<h4>First Segment of Eigenvectors</h4>
-<p><img alt="First Segment of Eigenvectors" src="images/eigenvectors_segment.png"></p>
-<hr>
-<h3>4. Interpretation of Results</h3>
-<h4>4.1 Covariance Matrix Structure</h4>
+<p>The eigenvalues are first sorted in descending order using argsort()[::-1].
+The cumulative sum of the sorted eigenvalues is then computed, and the truncation index n_terms is chosen such that:</p>
+<div class="math">$$
+\sum_{i=1}^{n_\text{terms}} \lambda_i \geq 0.975 \sum_{i=1}^{N} \lambda_i
+$$</div>
+<p>This corresponds to retaining 97.5% of the total variance of the random field.
+Such a threshold is commonly used in stochastic mechanics to balance accuracy and computational efficiency.</p>
+<hr/>
+<h3 id="visualizing-the-covariance-structure"><a class="toclink" href="#visualizing-the-covariance-structure">Visualizing the Covariance Structure</a></h3>
+<h4 id="3d-covariance-surface"><a class="toclink" href="#3d-covariance-surface">3D Covariance Surface</a></h4>
+<p><img alt="3D Covariance Matrix" src="/images/covariance_3d.png"/></p>
+<h4 id="2d-covariance-heatmap"><a class="toclink" href="#2d-covariance-heatmap">2D Covariance Heatmap</a></h4>
+<p><img alt="2D Covariance Heatmap" src="/images/covariance_2d.png"/></p>
+<h4 id="eigenvalue-spectrum-with-truncation"><a class="toclink" href="#eigenvalue-spectrum-with-truncation">Eigenvalue Spectrum with Truncation</a></h4>
+<p><img alt="Eigenvalue Spectrum" src="/images/eigenvalue_spectrum.png"/></p>
+<h4 id="first-six-eigenvector-surfaces"><a class="toclink" href="#first-six-eigenvector-surfaces">First Six Eigenvector Surfaces</a></h4>
+<p><img alt="First Six Eigenvector Surfaces" src="/images/eigenvectors_surfaces.png"/></p>
+<h4 id="first-segment-of-eigenvectors"><a class="toclink" href="#first-segment-of-eigenvectors">First Segment of Eigenvectors</a></h4>
+<p><img alt="First Segment of Eigenvectors" src="/images/eigenvectors_segment.png"/></p>
+<hr/>
+<h3 id="interpretation-of-results"><a class="toclink" href="#interpretation-of-results">Interpretation of Results</a></h3>
+<h4 id="covariance-matrix-structure"><a class="toclink" href="#covariance-matrix-structure">Covariance Matrix Structure</a></h4>
 <p>The covariance matrix exhibits a smooth decay away from the diagonal, reflecting the spatial correlation imposed by the Rational variogram.
 Points closer together in the mesh have higher covariance, as expected for a material field with finite correlation length.</p>
-<h4>4.2 Eigenvalue Decay and Truncation</h4>
+<h4 id="eigenvalue-decay-and-truncation"><a class="toclink" href="#eigenvalue-decay-and-truncation">Eigenvalue Decay and Truncation</a></h4>
 <p>The eigenvalues decay rapidly, indicating that the Young's modulus field is highly compressible in the KLE basis.
 Retaining only the first <span class="math">\(n\)</span> modes captures 97.5% of the total variance — a common threshold in stochastic mechanics.</p>
-<h4>4.3 Eigenvector Shapes</h4>
+<h4 id="eigenvector-shapes"><a class="toclink" href="#eigenvector-shapes">Eigenvector Shapes</a></h4>
 <p>The first few eigenvectors represent:</p>
 <ul>
 <li>large-scale spatial fluctuations</li>
@@ -249,8 +286,8 @@ Retaining only the first <span class="math">\(n\)</span> modes captures 97.5% of
 <li>physically interpretable patterns of stiffness variation</li>
 </ul>
 <p>Higher modes capture finer-scale oscillations but contribute less to the total variance.</p>
-<hr>
-<h3>5. Conclusion</h3>
+<hr/>
+<h3 id="conclusion"><a class="toclink" href="#conclusion">Conclusion</a></h3>
 <p>Covariance matrices are the backbone of random field modeling in computational mechanics.
 By combining:</p>
 <ul>
@@ -269,8 +306,10 @@ By combining:</p>
 <li>simulation of heterogeneous materials</li>
 </ul>
 <p>The Python implementation shown here provides a practical and extensible foundation for advanced stochastic modeling.</p>
-<hr>
-<h4>References</h4>
+<hr/>
+<h4>
+References
+</h4>
 <ol>
 <li>Ghanem, R., &amp; Spanos, P. (1991). <em>Stochastic Finite Elements: A Spectral Approach</em>. Springer.</li>
 <li>Sudret, B., &amp; Der Kiureghian, A. (2000). <em>Stochastic Finite Element Methods and Reliability</em>.</li>
@@ -300,7 +339,7 @@ By combining:</p>
     configscript[(window.opera ? "innerHTML" : "text")] =
         "MathJax.Hub.Config({" +
         "    config: ['MMLorHTML.js']," +
-        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js','AMSmath.js','AMSsymbols.js'], equationNumbers: { autoNumber: 'none' } }," +
         "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
         "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
         "    displayAlign: '"+ align +"'," +
@@ -345,7 +384,13 @@ By combining:</p>
 
              
  
-            
+                <p id="post-share-links">
+    Share on:
+      <a href="https://twitter.com/intent/tweet?text=Covariance%20Matrices%20in%20Computational%20Mechanics%3A%20From%20Spatial%20Variability%20to%20Eigenmodes&url=/computational-mechanics/covariance-matrix-computational-mechanics/&hashtags=covariance,variogram,kle,eigenvalues,stochastic-fields,youngs-modulus" target="_blank" rel="nofollow noopener noreferrer" title="Share on Twitter">Twitter</a>
+ ❄       <a href="https://www.facebook.com/sharer/sharer.php?u=/computational-mechanics/covariance-matrix-computational-mechanics/" target="_blank" rel="nofollow noopener noreferrer" title="Share on Facebook">Facebook</a>
+ ❄       <a href="mailto:?subject=Covariance%20Matrices%20in%20Computational%20Mechanics%3A%20From%20Spatial%20Variability%20to%20Eigenmodes&amp;body=/computational-mechanics/covariance-matrix-computational-mechanics/" target="_blank" rel="nofollow noopener noreferrer" title="Share via Email">Email</a>
+ ❄       <a href="https://www.linkedin.com/shareArticle?mini=true&url=/computational-mechanics/covariance-matrix-computational-mechanics/&title=Covariance%20Matrices%20in%20Computational%20Mechanics%3A%20From%20Spatial%20Variability%20to%20Eigenmodes&summary=A%20practical%20and%20intuitive%20walkthrough%20of%20covariance%20matrices%2C%20variograms%2C%20and%20eigen-decomposition%20for%20spatially%20varying%20Young%27s%20modulus%20fields%20in%20computational%20mechanics.&source=/computational-mechanics/covariance-matrix-computational-mechanics/" target="_blank" rel="nofollow noopener noreferrer" title="Share on LinkedIn">LinkedIn</a>
+
             
             
 
