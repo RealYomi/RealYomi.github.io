@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="/theme/css/elegant.prod.9e9d5ce754.css" media="screen">
+        <link rel="stylesheet" type="text/css" href="/theme/css/custom.css" media="screen">
+
+        <link rel="dns-prefetch" href="//fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+
+        <meta name="author" content="OWOEYE Abayomi" />
+
+        <meta property="og:type" content="article" />
+        <meta name="twitter:card" content="summary">
+
+<meta name="keywords" content="variogram, geostatistics, spatial variability, model fitting, stochastic fields, material property, gstools, Computational Mechanics, " />
+
+<meta property="og:title" content="From Raw Data to Variogram Models: Quantifying Spatial Variability in Engineering Fields "/>
+<meta property="og:url" content="/computational-mechanics/variogram-experimental-to-model-fitting/" />
+<meta property="og:description" content="A practical walkthrough of computing experimental variograms from spatial measurement data and fitting theoretical models — the essential first step before covariance matrix construction and stochastic simulation." />
+<meta property="og:site_name" content="Abayomi&#39;s Notes" />
+<meta property="og:article:author" content="OWOEYE Abayomi" />
+<meta property="og:article:published_time" content="2026-04-06T00:00:00+02:00" />
+<meta name="twitter:title" content="From Raw Data to Variogram Models: Quantifying Spatial Variability in Engineering Fields ">
+<meta name="twitter:description" content="A practical walkthrough of computing experimental variograms from spatial measurement data and fitting theoretical models — the essential first step before covariance matrix construction and stochastic simulation.">
+
+        <title>From Raw Data to Variogram Models: Quantifying Spatial Variability in Engineering Fields  · Abayomi&#39;s Notes
+</title>
+        <link rel="shortcut icon" href="/theme/images/favicon.ico" type="image/x-icon" />
+        <link rel="icon" href="/theme/images/apple-touch-icon-152x152.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/theme/images/apple-touch-icon.png"  type="image/png" />
+        <link rel="apple-touch-icon" sizes="57x57" href="/theme/images/apple-touch-icon-57x57.png" type="image/png" />
+        <link rel="apple-touch-icon" sizes="72x72" href="/theme/images/apple-touch-icon-72x72.png" type="image/png" />
+        <link rel="apple-touch-icon" sizes="76x76" href="/theme/images/apple-touch-icon-76x76.png" type="image/png" />
+        <link rel="apple-touch-icon" sizes="114x114" href="/theme/images/apple-touch-icon-114x114.png" type="image/png" />
+        <link rel="apple-touch-icon" sizes="120x120" href="/theme/images/apple-touch-icon-120x120.png" type="image/png" />
+        <link rel="apple-touch-icon" sizes="144x144" href="/theme/images/apple-touch-icon-144x144.png" type="image/png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/theme/images/apple-touch-icon-152x152.png" type="image/png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/theme/images/apple-touch-icon-180x180.png" type="image/png" />
+
+
+
+    </head>
+    <body>
+        <div id="content">
+            <div class="navbar navbar-static-top">
+                <div class="navbar-inner">
+                    <div class="container-fluid">
+                        <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </a>
+                        <a class="brand" href="/"><span class=site-name>Abayomi's Notes</span></a>
+                        <div class="nav-collapse collapse">
+                            <ul class="nav pull-right top-menu">
+                                <li >
+                                    <a href=
+                                       "/"
+                                    >Home</a>
+                                </li>
+                                <li ><a href="/about.html">About</a></li>
+                                <li ><a href="/contact.html">Contact</a></li>
+                                <li ><a href="/projects.html">Projects</a></li>
+                                <li ><a href="/research.html">Research</a></li>
+                                <li ><a href="/categories.html">Categories</a></li>
+                                <li ><a href="/tags.html">Tags</a></li>
+                                <li ><a href="/archives.html">Archives</a></li>
+                                <li><form class="navbar-search" action="/search.html" onsubmit="return validateForm(this.elements['q'].value);"> <input type="text" class="search-query" placeholder="Search" name="q" id="tipue_search_input"></form></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container-fluid">
+                <div class="row-fluid">
+                    <div class="span1"></div>
+                    <div class="span10">
+<article itemscope>
+<div class="row-fluid">
+    <header class="page-header span10 offset2">
+        <h1>
+            <a href="/computational-mechanics/variogram-experimental-to-model-fitting/">
+                From Raw Data to Variogram Models: Quantifying Spatial Variability in Engineering Fields
+            </a>
+        </h1>
+    </header>
+</div>
+
+<div class="row-fluid">
+    <div class="span2 table-of-content">
+        <nav>
+        <h4>Contents</h4>
+        <div class="toc">
+<ul>
+<li><a href="#why-variograms">Why Variograms?</a></li>
+<li><a href="#the-dataset">The Dataset</a></li>
+<li><a href="#step-1-the-experimental-variogram">Step 1 — The Experimental Variogram</a><ul>
+<li><a href="#what-is-a-variogram">What Is a Variogram?</a></li>
+<li><a href="#how-we-compute-it">How We Compute It</a></li>
+<li><a href="#the-python-script-experimental-variogram">The Python Script — Experimental Variogram</a></li>
+</ul>
+</li>
+<li><a href="#step-2-fitting-a-theoretical-model">Step 2 — Fitting a Theoretical Model</a><ul>
+<li><a href="#candidate-models">Candidate Models</a></li>
+<li><a href="#the-python-script-model-fitting">The Python Script — Model Fitting</a></li>
+<li><a href="#ranking-and-selection">Ranking and Selection</a></li>
+</ul>
+</li>
+<li><a href="#interpretation-of-results">Interpretation of Results</a></li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+</div>
+        </nav>
+    </div>
+    <div class="span8 article-content">
+            
+            
+<hr/>
+<h2 style="text-align: center;">
+From Raw Data to Variogram Models:<br/>
+Quantifying Spatial Variability in Engineering Fields
+</h2>
+<p>In the <a href="https://realyomi.github.io/computational-mechanics/covariance-matrix-computational-mechanics/">previous post</a>, we built a covariance matrix from a chosen variogram model and used it to decompose a spatially varying material property field via the Karhunen–Loève expansion. We answered the question: <em>given</em> a variogram, what do we do with it?</p>
+<p>This post takes a step back and answers the question that comes <em>before</em> that: <strong>where does the variogram come from?</strong></p>
+<p>In practice, you do not pick a variogram from thin air. You measure it from real data — experimental measurements of a material property at known spatial locations — and then fit a theoretical model to those measurements. That fitted model is what feeds into the covariance matrix.</p>
+<p>Here, we walk through that process end to end: from raw spatial data, to an experimental variogram, to a ranked set of fitted theoretical models. The workflow is entirely material-agnostic and applies to any spatially varying scalar field you can measure in 2D, such as:</p>
+<ul>
+<li><strong>Elastic modulus</strong> or <strong>hardness</strong> mapped across a metal alloy specimen</li>
+<li><strong>Ultrasonic pulse velocity (UPV)</strong> over a concrete slab</li>
+<li><strong>Porosity</strong> or <strong>permeability</strong> of a geomaterial core sample</li>
+<li><strong>Thermal conductivity</strong> of a composite panel</li>
+<li><strong>Surface roughness</strong> of an additively manufactured part</li>
+</ul>
+<p>The data and scripts for this post are available on <a href="https://github.com/RealYomi/ASCEArt1_Variogram/tree/main/Variogram">GitHub</a>.</p>
+<hr/>
+<h3 id="why-variograms"><a class="toclink" href="#why-variograms">Why Variograms?</a></h3>
+<p>Before we compute anything, it is worth asking: why go through this trouble?</p>
+<p>A <strong>variogram</strong> is the standard tool for characterizing <em>how</em> a spatial property varies with distance. It tells you two critical things at once:</p>
+<ol>
+<li><strong>The range</strong> — beyond what separation distance do two measurements become practically uncorrelated?</li>
+<li><strong>The sill</strong> — what is the overall variance of the field?</li>
+</ol>
+<p>Together, these two numbers encode the spatial "personality" of your material field. Without them, any stochastic simulation of that field is just guesswork.</p>
+<hr/>
+<h3 id="the-dataset"><a class="toclink" href="#the-dataset">The Dataset</a></h3>
+<p>The experimental data consists of a 2D spatial map of a material property field, (z), sampled at a discrete grid of locations defined by coordinates (x) and (y). The three arrays — <code>x_cor.xlsx</code>, <code>y_cor.xlsx</code>, and <code>z_data.xlsx</code> — are available in the <a href="https://github.com/RealYomi/ASCEArt1_Variogram/tree/main/Variogram">GitHub repository</a>.</p>
+<p>In our case the field is standardized before variogram computation, meaning the data have been transformed to have zero mean and unit variance. This standardization is important: it makes the variogram, and any model fitted to it, dimensionless and transferable across materials and scales.</p>
+<hr/>
+<h3 id="step-1-the-experimental-variogram"><a class="toclink" href="#step-1-the-experimental-variogram">Step 1 — The Experimental Variogram</a></h3>
+<h4 id="what-is-a-variogram"><a class="toclink" href="#what-is-a-variogram">What Is a Variogram?</a></h4>
+<p>The <strong>experimental (empirical) variogram</strong>, also called the semivariogram, is defined as:</p>
+<div class="math">$$
+\hat{\gamma}(h) = \frac{1}{2|N(h)|} \sum_{(i,j) \in N(h)} \left[ z(\mathbf{x}_i) - z(\mathbf{x}_j) \right]^2
+$$</div>
+<p>where:
+- (h) is the <strong>lag distance</strong> — the separation between two measurement points
+- (N(h)) is the set of all point pairs separated by approximately (h), within a chosen tolerance
+- (|N(h)|) is the number of such pairs</p>
+<p>In plain terms: for every pair of data points, we compute the squared difference in their property values, group those pairs by how far apart they are, and average. The result is a curve showing how dissimilarity grows with distance.</p>
+<p>A few key features to look for in the resulting curve:</p>
+<p>| Feature | Symbol | Meaning |
+|---|---|---|
+| <strong>Nugget</strong> | (C_0) | Variogram value at (h \to 0); reflects measurement noise or micro-scale variability |
+| <strong>Sill</strong> | (C_0 + C) | Plateau value the variogram levels off to; equals the total variance |
+| <strong>Range</strong> | (a) | Lag distance at which the sill is reached; beyond this, points are uncorrelated |</p>
+<h4 id="how-we-compute-it"><a class="toclink" href="#how-we-compute-it">How We Compute It</a></h4>
+<p>The computation involves three user-defined parameters:</p>
+<ul>
+<li><strong>Lag step</strong> (h): the width of each distance bin</li>
+<li><strong>Lag tolerance</strong>: how loosely we define "approximately (h)" — typically 0 to 0.5</li>
+<li><strong>Number of directions</strong> and <strong>angular tolerance</strong>: for directional (anisotropic) variograms</li>
+</ul>
+<p>For an <strong>isotropic</strong> assumption — where spatial correlation is the same in all directions — we ignore the directional breakdown and aggregate all pairs at a given lag distance. This is the most common starting point in industrial practice.</p>
+<p>For an <strong>anisotropic</strong> analysis, we compute directional variograms (e.g., 0°, 45°, 90°, 135°) and check whether the range differs between directions. If it does, the field has a preferred orientation of correlation — a useful insight for material characterization.</p>
+<h4 id="the-python-script-experimental-variogram"><a class="toclink" href="#the-python-script-experimental-variogram">The Python Script — Experimental Variogram</a></h4>
+<p>The full script is available in the <a href="https://github.com/RealYomi/ASCEArt1_Variogram/tree/main/Variogram">GitHub repository</a>. Below is an annotated summary of the key steps.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="c1"># --- Load spatial coordinates and property values ---</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="sa">r</span><span class="s1">'C:\x_cor.xlsx'</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="sa">r</span><span class="s1">'C:\y_cor.xlsx'</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="sa">r</span><span class="s1">'C:\z_data.xlsx'</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+<span class="c1"># --- Call the variogram function ---</span>
+<span class="c1"># The function prompts for: lag step, lag tolerance,</span>
+<span class="c1"># number of directions, angular tolerance, and initial direction.</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">varioTry1T2</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+</code></pre></div>
+<p>Internally, the function:</p>
+<ol>
+<li><strong>Builds a meshgrid</strong> from <code>x</code> and <code>y</code>, then flattens the coordinates and property values.</li>
+<li><strong>Computes pairwise distances</strong> and angles for the upper-triangular matrix of all point pairs.</li>
+<li><strong>Bins the squared differences</strong> by lag distance and direction into aggregated semivariance values.</li>
+<li><strong>Plots</strong> both directional and isotropic variograms on the same figure.</li>
+</ol>
+<p>The output <code>results</code> is a NumPy array storing the variogram values (lag distance, semivariance, pair count, standard deviation) organized by direction, suitable for export to Excel for the model-fitting step.</p>
+<p><img alt="Experimental Variogram Plot" src="https://realyomi.github.io/images/experimental_variogram.png"/>
+<em>Figure 1: Experimental (isotropic) variogram computed from the spatial material property data. The x-axis is lag distance (h); the y-axis is semivariance (\hat{\gamma}(h)).</em></p>
+<hr/>
+<h3 id="step-2-fitting-a-theoretical-model"><a class="toclink" href="#step-2-fitting-a-theoretical-model">Step 2 — Fitting a Theoretical Model</a></h3>
+<p>An experimental variogram is just a scatter of points. To use it in downstream computations — building a covariance matrix, simulating random fields — we need a <strong>smooth, positive-definite theoretical model</strong> (\gamma(h)) that is fitted to those points.</p>
+<h4 id="candidate-models"><a class="toclink" href="#candidate-models">Candidate Models</a></h4>
+<p>We test seven standard variogram models from the <code>gstools</code> library. All share the same structural anatomy: a <strong>nugget</strong> (C_0), a <strong>sill</strong> (\sigma^2), and a <strong>correlation length</strong> (\ell). Some have an additional <strong>shape parameter</strong> (\alpha).</p>
+<p>| Model | Formula |
+|---|---|
+| <strong>Exponential</strong> | (\gamma(h) = \sigma^2\left[1 - \exp!\left(-\frac{h}{\ell}\right)\right]) |
+| <strong>Gaussian</strong> | (\gamma(h) = \sigma^2\left[1 - \exp!\left(-\frac{h^2}{\ell^2}\right)\right]) |
+| <strong>Spherical</strong> | (\gamma(h) = \sigma^2\left[\frac{3h}{2\ell} - \frac{h^3}{2\ell^3}\right],\ h \leq \ell) |
+| <strong>Stable</strong> | (\gamma(h) = \sigma^2\left[1 - \exp!\left(-\left(\frac{h}{\ell}\right)^\alpha\right)\right]) |
+| <strong>Rational</strong> | (\gamma(h) = \sigma^2\left[1 - \left(1 + \frac{h^2}{\ell^2}\right)^{-\alpha}\right]) |
+| <strong>Circular</strong> | Bounded model with circular covariance structure |
+| <strong>Cubic</strong> | (\gamma(h)) polynomial, smooth at the origin |</p>
+<p>The <strong>Exponential</strong> model implies a rough field (non-differentiable). The <strong>Gaussian</strong> implies a very smooth, highly correlated field. The <strong>Stable</strong> and <strong>Rational</strong> models interpolate between these extremes via (\alpha). In practice, the data decide — which is exactly why we fit and rank all of them.</p>
+<p>Note the connection to the previous post: once a model is selected, its parameters ((\sigma^2, \ell, \alpha)) directly define the covariance function via:</p>
+<div class="math">$$
+C(h) = C(0) - \gamma(h)
+$$</div>
+<p>which is then used to assemble the full covariance matrix for the Karhunen–Loève expansion.</p>
+<h4 id="the-python-script-model-fitting"><a class="toclink" href="#the-python-script-model-fitting">The Python Script — Model Fitting</a></h4>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">gstools</span> <span class="k">as</span> <span class="nn">gs</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="c1"># --- STEP 1: Import experimental variogram data ---</span>
+<span class="n">vario</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="sa">r</span><span class="s2">"C:\...\Vario_results.xlsx"</span><span class="p">)</span>
+<span class="n">bin_center</span> <span class="o">=</span> <span class="n">vario</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">397</span><span class="p">:</span><span class="mi">530</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>   <span class="c1"># lag distances</span>
+<span class="n">gamma</span>      <span class="o">=</span> <span class="n">vario</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">397</span><span class="p">:</span><span class="mi">530</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>   <span class="c1"># semivariance values</span>
+
+<span class="c1"># --- STEP 2: Define candidate models ---</span>
+<span class="n">models</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"Exponential"</span><span class="p">:</span> <span class="n">gs</span><span class="o">.</span><span class="n">Exponential</span><span class="p">,</span>
+    <span class="s2">"Stable"</span><span class="p">:</span>      <span class="n">gs</span><span class="o">.</span><span class="n">Stable</span><span class="p">,</span>
+    <span class="s2">"Gaussian"</span><span class="p">:</span>    <span class="n">gs</span><span class="o">.</span><span class="n">Gaussian</span><span class="p">,</span>
+    <span class="s2">"Spherical"</span><span class="p">:</span>   <span class="n">gs</span><span class="o">.</span><span class="n">Spherical</span><span class="p">,</span>
+    <span class="s2">"Rational"</span><span class="p">:</span>    <span class="n">gs</span><span class="o">.</span><span class="n">Rational</span><span class="p">,</span>
+    <span class="s2">"Circular"</span><span class="p">:</span>    <span class="n">gs</span><span class="o">.</span><span class="n">Circular</span><span class="p">,</span>
+    <span class="s2">"Cubic"</span><span class="p">:</span>       <span class="n">gs</span><span class="o">.</span><span class="n">Cubic</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="c1"># --- STEP 3: Fit models and collect results ---</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">bin_center</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"k"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"data"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+<span class="n">results_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
+    <span class="n">fit_model</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="n">model</span><span class="p">](</span><span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">para</span><span class="p">,</span> <span class="n">pcov</span><span class="p">,</span> <span class="n">r2</span> <span class="o">=</span> <span class="n">fit_model</span><span class="o">.</span><span class="n">fit_variogram</span><span class="p">(</span>
+        <span class="n">bin_center</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">return_r2</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nugget</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+    <span class="n">fit_model</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_max</span><span class="o">=</span><span class="mi">41</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+    <span class="n">results_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s1">'Model'</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span> <span class="s1">'Covariance_Matrix'</span><span class="p">:</span> <span class="n">pcov</span><span class="p">,</span> <span class="s1">'R_squared'</span><span class="p">:</span> <span class="n">r2</span><span class="p">,</span> <span class="o">**</span><span class="n">para</span>
+    <span class="p">})</span>
+    <span class="n">scores</span><span class="p">[</span><span class="n">model</span><span class="p">]</span> <span class="o">=</span> <span class="n">r2</span>
+
+<span class="n">results_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results_list</span><span class="p">)</span>
+
+<span class="c1"># --- STEP 4: Rank by pseudo-R² ---</span>
+<span class="n">ranking</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"RANKING by Pseudo-R² score"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ranking</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">&gt;6</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">model</span><span class="si">:</span><span class="s2">&gt;15</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">score</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># --- STEP 5: Plot ---</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">'Lag distance ($</span><span class="se">\\</span><span class="s1">Delta s$)'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">'Gamma $</span><span class="se">\\</span><span class="s1">gamma(h)$'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sorted_models</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">ranking</span><span class="p">]</span>
+<span class="n">fitted_legends</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2"> (R² = </span><span class="si">{</span><span class="n">scores</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)"</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">sorted_models</span><span class="p">]</span>
+<span class="n">handles</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_legend_handles_labels</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="p">,</span>
+           <span class="p">[</span><span class="s2">"Experimental variogram (isotropic)"</span><span class="p">]</span> <span class="o">+</span> <span class="n">fitted_legends</span><span class="p">,</span>
+           <span class="n">loc</span><span class="o">=</span><span class="s1">'lower right'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+<p>The <code>fit_variogram</code> method minimizes the weighted least-squares distance between the experimental points and the theoretical curve, returning the fitted parameters, the parameter covariance matrix <code>pcov</code>, and the pseudo-R² score <code>r2</code>.</p>
+<p><img alt="Theoretical Model Fitting" src="https://realyomi.github.io/images/variogram_model_fitting.png"/>
+<em>Figure 2: Experimental variogram (black dots) with all seven candidate theoretical models fitted. Models are ranked by pseudo-R² in the legend.</em></p>
+<h4 id="ranking-and-selection"><a class="toclink" href="#ranking-and-selection">Ranking and Selection</a></h4>
+<p>The pseudo-R² score used here is:</p>
+<div class="math">$$
+R^2 = 1 - \frac{\sum_i \left[\hat{\gamma}(h_i) - \gamma_{\text{model}}(h_i)\right]^2}{\sum_i \left[\hat{\gamma}(h_i) - \bar{\gamma}\right]^2}
+$$</div>
+<p>A score of 1.0 is a perfect fit; a score below 0 means the model is worse than simply using the mean. In practice, scores above 0.90 are considered good for spatial data from engineering experiments.</p>
+<p>The ranking step is not merely cosmetic. Different models impose different assumptions about the smoothness of the underlying field. Selecting the wrong model — say, a Gaussian for a rough field — can lead to a covariance matrix that produces unrealistically smooth simulated fields and, downstream, overly optimistic structural reliability estimates.</p>
+<hr/>
+<h3 id="interpretation-of-results"><a class="toclink" href="#interpretation-of-results">Interpretation of Results</a></h3>
+<p>Once a best-fitting model is identified, the key outputs to record are:</p>
+<ul>
+<li><strong>Variance</strong> (\sigma^2): the sill of the standardized variogram (should be ≈ 1.0 for standardized data)</li>
+<li><strong>Correlation length</strong> (\ell): the spatial scale over which the property is strongly correlated — directly controls the dominant mode shapes in the KLE</li>
+<li><strong>Nugget</strong> (C_0): if non-zero, signals either measurement noise or sub-grid-scale variability</li>
+<li><strong>Shape parameter</strong> (\alpha) (for Stable/Rational): controls field smoothness</li>
+</ul>
+<p>These parameters connect directly to the covariance matrix construction described in the <a href="https://realyomi.github.io/computational-mechanics/covariance-matrix-computational-mechanics/">previous post</a>. In that post, we used a Rational model with (\sigma^2 = 1.0), (\ell = 3.0), (\alpha = 1.14) — parameters that would emerge naturally from the fitting workflow described here.</p>
+<hr/>
+<h3 id="conclusion"><a class="toclink" href="#conclusion">Conclusion</a></h3>
+<p>Variogram analysis is the essential first step in any stochastic modeling workflow that involves spatially varying material properties. By combining:</p>
+<ul>
+<li>an experimental variogram computed from measured spatial data</li>
+<li>a suite of fitted theoretical models ranked by goodness of fit</li>
+</ul>
+<p>we obtain a compact, physically meaningful description of the spatial variability in a material field — regardless of the specific material or application.</p>
+<p>This description then feeds directly into the covariance matrix, the Karhunen–Loève expansion, and ultimately into stochastic finite element simulations and uncertainty quantification workflows.</p>
+<p>The complete Python scripts and dataset for this post are available on <a href="https://github.com/RealYomi/ASCEArt1_Variogram/tree/main/Variogram">GitHub</a>.</p>
+<hr/>
+<h3>
+References
+</h3>
+<ol>
+<li>Matheron, G. (1963). Principles of geostatistics. <em>Economic Geology</em>, 58(8), 1246–1266.</li>
+<li>Cressie, N. (1993). <em>Statistics for Spatial Data</em> (Revised ed.). Wiley.</li>
+<li>Chiles, J. P., &amp; Delfiner, P. (2012). <em>Geostatistics: Modeling Spatial Uncertainty</em> (2nd ed.). Wiley.</li>
+<li>Müller, S., &amp; Schüler, L. (2022). GSTools v1.3: A toolbox for geostatistical modelling in Python. <em>Geoscientific Model Development</em>, 15, 3161–3182.</li>
+<li>Vanmarcke, E. (2010). <em>Random Fields: Analysis and Synthesis</em>. World Scientific.</li>
+<li>Ghanem, R., &amp; Spanos, P. (1991). <em>Stochastic Finite Elements: A Spectral Approach</em>. Springer.</li>
+<li>GSTools Documentation: <a href="https://geostat-framework.readthedocs.io/projects/gstools/">https://geostat-framework.readthedocs.io/projects/gstools/</a></li>
+</ol>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (true) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
+
+    var configscript = document.createElement('script');
+    configscript.type = 'text/x-mathjax-config';
+    configscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js','AMSmath.js','AMSsymbols.js'], equationNumbers: { autoNumber: 'none' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        availableFonts: ['STIX', 'TeX']," +
+        "        preferredFont: 'STIX'," +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+
+
+             
+ 
+                <p id="post-share-links">
+    Share on:
+      <a href="https://twitter.com/intent/tweet?text=From%20Raw%20Data%20to%20Variogram%20Models%3A%20Quantifying%20Spatial%20Variability%20in%20Engineering%20Fields&url=/computational-mechanics/variogram-experimental-to-model-fitting/&hashtags=variogram,geostatistics,spatial-variability,model-fitting,stochastic-fields,material-property,gstools" target="_blank" rel="nofollow noopener noreferrer" title="Share on Twitter">Twitter</a>
+ ❄       <a href="https://www.facebook.com/sharer/sharer.php?u=/computational-mechanics/variogram-experimental-to-model-fitting/" target="_blank" rel="nofollow noopener noreferrer" title="Share on Facebook">Facebook</a>
+ ❄       <a href="mailto:?subject=From%20Raw%20Data%20to%20Variogram%20Models%3A%20Quantifying%20Spatial%20Variability%20in%20Engineering%20Fields&amp;body=/computational-mechanics/variogram-experimental-to-model-fitting/" target="_blank" rel="nofollow noopener noreferrer" title="Share via Email">Email</a>
+
+            
+            
+
+
+
+
+
+
+
+            <hr/>
+<section>
+    <h2>Related Posts</h2>
+<ul class="related-posts-list">
+<li><a href="/computational-mechanics/covariance-matrix-computational-mechanics/" title="Covariance Matrices in Computational Mechanics: From Spatial Variability to Eigenmodes">Covariance Matrices in Computational Mechanics: From Spatial Variability to Eigenmodes</a></li>
+</ul>
+<hr />
+</section>
+            <aside>
+            <nav>
+            <ul class="articles-timeline">
+                <li class="previous-article">« <a href="/computational-mechanics/covariance-matrix-computational-mechanics/" title="Previous: Covariance Matrices in Computational Mechanics: From Spatial Variability to Eigenmodes">Covariance Matrices in Computational Mechanics: From Spatial Variability to Eigenmodes</a></li>
+            </ul>
+            </nav>
+            </aside>
+        </div>
+        <section id="article-sidebar" class="span2">
+    <h4>Reading Time</h4>
+    <p>~7 min read</p>
+            <h4>Published</h4>
+            <time itemprop="dateCreated" datetime="2026-04-06T00:00:00+02:00">Mon 06 April 2026</time>
+            <h4>Category</h4>
+            <a class="category-link" href="/categories.html#computational-mechanics-ref">Computational Mechanics</a>
+            <h4>Tags</h4>
+            <ul class="list-of-tags tags-in-article">
+                <li><a href="/tags.html#geostatistics-ref">geostatistics
+                    <span class="superscript">1</span>
+</a></li>
+                <li><a href="/tags.html#gstools-ref">gstools
+                    <span class="superscript">1</span>
+</a></li>
+                <li><a href="/tags.html#material-property-ref">material property
+                    <span class="superscript">2</span>
+</a></li>
+                <li><a href="/tags.html#model-fitting-ref">model fitting
+                    <span class="superscript">1</span>
+</a></li>
+                <li><a href="/tags.html#spatial-variability-ref">spatial variability
+                    <span class="superscript">1</span>
+</a></li>
+                <li><a href="/tags.html#stochastic-fields-ref">stochastic fields
+                    <span class="superscript">2</span>
+</a></li>
+                <li><a href="/tags.html#variogram-ref">variogram
+                    <span class="superscript">2</span>
+</a></li>
+            </ul>
+<h4>Contact</h4>
+<div id="sidebar-social-link">
+    <a href="https://github.com/RealYomi" title="" target="_blank" rel="nofollow noopener noreferrer">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-label="GitHub" role="img" viewBox="0 0 512 512"><rect width="512" height="512" rx="15%" fill="#1B1817"/><path fill="#fff" d="M335 499c14 0 12 17 12 17H165s-2-17 12-17c13 0 16-6 16-12l-1-50c-71 16-86-28-86-28-12-30-28-37-28-37-24-16 1-16 1-16 26 2 40 26 40 26 22 39 59 28 74 22 2-17 9-28 16-35-57-6-116-28-116-126 0-28 10-51 26-69-3-6-11-32 3-67 0 0 21-7 70 26 42-12 86-12 128 0 49-33 70-26 70-26 14 35 6 61 3 67 16 18 26 41 26 69 0 98-60 120-117 126 10 8 18 24 18 48l-1 70c0 6 3 12 16 12z"/></svg>
+    </a>
+    <a href="https://www.linkedin.com/in/owoeyeabayomi" title="" target="_blank" rel="nofollow noopener noreferrer">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-label="LinkedIn" role="img" viewBox="0 0 512 512" fill="#fff"><rect width="512" height="512" rx="15%" fill="#0077b5"/><circle cx="142" cy="138" r="37"/><path stroke="#fff" stroke-width="66" d="M244 194v198M142 194v198"/><path d="M276 282c0-20 13-40 36-40 24 0 33 18 33 45v105h66V279c0-61-32-89-76-89-34 0-51 19-59 32"/></svg>
+    </a>
+    <a href="mailto:mailto:Hotmail4ymx@gmail.com" title="" target="_blank" rel="nofollow noopener noreferrer">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-label="Mail" role="img" viewBox="0 0 512 512"><rect width="512" height="512" rx="15%" fill="#328cff"/><path d="m250 186c-46 0-69 35-69 74 0 44 29 72 68 72 43 0 73-32 73-75 0-44-34-71-72-71zm-1-37c30 0 57 13 77 33 0-22 35-22 35 1v150c-1 10 10 16 16 9 25-25 54-128-14-187-64-56-149-47-195-15-48 33-79 107-49 175 33 76 126 99 182 76 28-12 41 26 12 39-45 19-168 17-225-82-38-68-36-185 67-248 78-46 182-33 244 32 66 69 62 197-2 246-28 23-71 1-71-32v-11c-20 20-47 32-77 32-57 0-108-51-108-108 0-58 51-110 108-110" fill="#fff"/></svg>
+    </a>
+</div>
+            
+
+
+
+
+
+            
+
+
+
+
+
+        </section>
+</div>
+</article>
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe.
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides.
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo https://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>                    </div>
+                    <div class="span1"></div>
+                </div>
+            </div>
+        </div>
+<footer>
+
+
+
+
+    <div id="fpowered">
+        Powered by: <a href="http://getpelican.com/" title="Pelican Home Page" target="_blank" rel="nofollow noopener noreferrer">Pelican</a>
+        Theme: <a href="https://elegant.oncrashreboot.com/" title="Theme Elegant Home Page" target="_blank" rel="nofollow noopener noreferrer">Elegant</a>
+    </div>
+</footer>            <script src="//code.jquery.com/jquery.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+        <script src="/theme/js/elegant.prod.9e9d5ce754.js"></script>
+        <script>
+            function validateForm(query)
+            {
+                return (query.length > 0);
+            }
+        </script>
+
+    <script>
+    (function () {
+        if (window.location.hash.match(/^#comment-\d+$/)) {
+            $('#comment_thread').collapse('show');
+        }
+    })();
+    window.onhashchange=function(){
+        if (window.location.hash.match(/^#comment-\d+$/))
+            window.location.reload(true);
+    }
+    $('#comment_thread').on('shown', function () {
+        var link = document.getElementById('comment-accordion-toggle');
+        var old_innerHTML = link.innerHTML;
+        $(link).fadeOut(200, function() {
+            $(this).text('Click here to hide comments').fadeIn(200);
+        });
+        $('#comment_thread').on('hidden', function () {
+            $(link).fadeOut(200, function() {
+                $(this).text(old_innerHTML).fadeIn(200);
+            });
+        })
+    })
+</script>
+
+    </body>
+    <!-- Theme: Elegant built for Pelican
+        License : MIT -->
+</html>

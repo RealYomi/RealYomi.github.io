@@ -110,7 +110,3 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight .bp { color: #66d9ef; }                     /* self */
 .highlight .kc { color: #66d9ef; }                     /* True/False/None */
 
-/* Override Elegant default Title */
-.post-title {
-    display: none;
-}
