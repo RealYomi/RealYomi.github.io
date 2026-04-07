@@ -147,7 +147,7 @@ Quantifying Spatial Variability in Engineering Fields
 <h3 id="the-dataset"><a class="toclink" href="#the-dataset">The Dataset</a></h3>
 <p>For illustrative purposes, the experimental data used in this post consists of a 2D spatial map of a material property field (unit masonry brick dynamic modulus in GPa), (z), sampled at a discrete grid of locations defined by coordinates (x) and (y). The three arrays — <code>x_cor.xlsx</code>, <code>y_cor.xlsx</code>, and <code>z_data.xlsx</code> — are available in the <a href="https://github.com/RealYomi/ASCEArt1_Variogram/tree/main/Variogram">GitHub repository</a>.</p>
 <h4 style="text-align: center;">
-spatial map of a material property field
+Spatial map of a material property field
 </h4>
 <div style="display: flex; gap: 12px; align-items: flex-start; justify-content: center; margin: 0 auto;">
 <img alt="2D Material Property Heat Map" src="/images/2d_heatMap.png" style="width: 35%; height: auto;"/>
@@ -238,8 +238,8 @@ $$</div>
 <div style="display: flex; gap: 12px; align-items: flex-start; justify-content: center; margin: 0 auto;">
 <img alt="Experimental Variogram Plot" src="/images/experimental_variogram.png" style="width: 50%; height: auto;"/>
 </div>
-<p style="text-align: center;"><em>Figure 3: Unstructured &amp; Isotropic experimental variogram computed from the spatial material property data. The x-axis is lag distance \(h\); the y-axis is semivariance \(\hat{\gamma}(h)\).</em></p>
-<p><strong>A note on pair counts:</strong> Following established geostatistical practice, only lags with <span class="math">\(N(h)\)</span> <span class="math">\(\geq\)</span> <span class="math">\(0.5\%\)</span> of the maximum pair count were retained, lags below this threshold carry too few pairs to produce reliable semivariance estimates and can disproportionately skew model fitting.</p>
+<p style="text-align: center;"><em>Figure 3: Anisotropic &amp; Isotropic experimental variogram computed from the spatial material property data. The x-axis is lag distance \(h\); the y-axis is semivariance \(\hat{\gamma}(h)\).</em></p>
+<p><strong>A note on pair counts:</strong> Following established geostatistical practice, only lags with <span class="math">\(N(h)\)</span> <span class="math">\(\geq\)</span> <span class="math">\(0.5\%\)</span> of the maximum pair count were retained — lags below this threshold carry too few pairs to produce reliable semivariance estimates and can disproportionately skew model fitting. Remaining lags were down-weighted during fitting using weights proportional to <span class="math">\(N(h)/\hat{\gamma}(h)^2\)</span>, the Cressie weighting scheme, to account for residual heteroscedasticity. This is implemented directly in the fitting script via the <code>weights_cressie</code> array in Step 2.</p>
 <hr/>
 <h3 id="step-2-fitting-a-theoretical-model"><a class="toclink" href="#step-2-fitting-a-theoretical-model">Step 2 — Fitting a Theoretical Model</a></h3>
 <p>An experimental variogram is just a scatter of points. To use it in downstream computations, that is building a covariance matrix, simulating random fields, we need a <strong>smooth, positive-definite theoretical model</strong> <span class="math">\(\gamma(h)\)</span> that is fitted to those points.</p>
@@ -276,7 +276,7 @@ $$</div>
 </tr>
 <tr>
 <td style="padding: 8px 16px; border: 1px solid #ddd;"><strong>Circular</strong></td>
-<td style="padding: 8px 16px; border: 1px solid #ddd;">Bounded model with circular covariance structure </td>
+<td style="padding: 8px 16px; border: 1px solid #ddd;">\(\gamma(h) = \sigma^2 \left[1 - \frac{2}{\pi} \arccos\!\left(\frac{h}{\ell}\right) + \frac{2h}{\pi\ell}\sqrt{1 - \frac{h^2}{\ell^2}}\right]\) </td>
 </tr>
 <tr>
 <td style="padding: 8px 16px; border: 1px solid #ddd;"><strong>Cubic</strong></td>
@@ -285,7 +285,7 @@ $$</div>
 </tbody>
 </table>
 </div>
-<p>The <strong>Exponential</strong> model implies a rough field (non-differentiable). The <strong>Gaussian</strong> implies a very smooth, highly correlated field. The <strong>Stable</strong> and <strong>Rational</strong> models interpolate between these extremes via <span class="math">\(\alpha\)</span>. In practice, the data decide, which is exactly why we fit and rank all of them.</p>
+<p>The <strong>Exponential</strong> model implies a rough field (non-differentiable). The <strong>Gaussian</strong> implies a very smooth, highly correlated field. The <strong>Stable</strong> and <strong>Rational</strong> models interpolate between these extremes via <span class="math">\(\alpha\)</span>. The <strong>Spherical</strong> and <strong>Circular</strong> are both compact-support models, they reach their sill exactly at <span class="math">\(h = \ell\)</span> and assign zero correlation beyond it, with the Circular approaching the sill slightly more gradually. In practice, the data decide, which is exactly why we fit and rank all of them.</p>
 <p>Note the connection to the previous post: once a model is selected, its parameters (<span class="math">\(\sigma^2\)</span>, <span class="math">\(\ell\)</span>, <span class="math">\(\alpha\)</span>) directly define the covariance function via:</p>
 <div class="math">$$
 C(h) = C(0) - \gamma(h)
@@ -367,12 +367,21 @@ $$</div>
     <span class="c1"># Plot fitted model</span>
     <span class="n">fit_model</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_max</span><span class="o">=</span><span class="mi">41</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">)</span>
     <span class="n">results_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-        <span class="s1">'Model'</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span> <span class="s1">'Covariance_Matrix'</span><span class="p">:</span> <span class="n">pcov</span><span class="p">,</span> <span class="s1">'R_squared'</span><span class="p">:</span> <span class="n">r2</span><span class="p">,</span> <span class="o">**</span><span class="n">para</span>
+        <span class="s1">'Model'</span><span class="p">:</span> <span class="n">model_name</span><span class="p">,</span> <span class="s1">'Covariance_Matrix'</span><span class="p">:</span> <span class="n">pcov</span><span class="p">,</span> <span class="s1">'R_squared'</span><span class="p">:</span> <span class="n">r2</span><span class="p">,</span> <span class="o">**</span><span class="n">para</span>
     <span class="p">})</span>
     <span class="n">scores</span><span class="p">[</span><span class="n">model_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">r2</span>
 <span class="n">results_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results_list</span><span class="p">)</span>
 
-<span class="c1"># --- STEP 5: Plot ---</span>
+<span class="c1"># --- STEP 5: Results &amp; Rank by pseudo-R² ---</span>
+<span class="n">ranking</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span><span class="o">*</span><span class="mi">60</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"MODEL RANKING by Weighted Pseudo-R² Score"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span><span class="o">*</span><span class="mi">60</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ranking</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">&gt;3</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">model</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}</span><span class="s2">: R² = </span><span class="si">{</span><span class="n">score</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># --- STEP 6: Plot ---</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">'Lag distance (h-cm)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">'Gamma (Semivariogram) $\gamma(h)$'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
@@ -385,27 +394,19 @@ $$</div>
            <span class="p">[</span><span class="s2">"Experimental variogram (isotropic)"</span><span class="p">]</span> <span class="o">+</span> <span class="n">fitted_legends</span><span class="p">,</span>
            <span class="n">loc</span><span class="o">=</span><span class="s1">'lower right'</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-
-<span class="c1"># --- STEP 6: Results &amp; Rank by pseudo-R² ---</span>
-<span class="n">ranking</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span><span class="o">*</span><span class="mi">60</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"MODEL RANKING by Weighted Pseudo-R² Score"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span><span class="o">*</span><span class="mi">60</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ranking</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">&gt;3</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">model</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}</span><span class="s2">: R² = </span><span class="si">{</span><span class="n">score</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 <p>The <code>fit_variogram</code> method minimizes the weighted least-squares distance between the experimental points and the theoretical curve, returning the fitted parameters, the parameter covariance matrix <code>pcov</code>, and the pseudo-R² score <code>r2</code>. Figure 4 is an Isotropic experimental variogram (black dots) with all seven candidate theoretical models fitted. Models are ranked by pseudo-R² in the legend.</p>
 <div style="display: flex; gap: 12px; align-items: flex-start; justify-content: center; margin: 0 auto;">
 <img alt="Theoretical Model Fitting" src="/images/vario_fitting.png" style="width: 50%; height: auto;"/>
 </div>
-<p style="text-align: center;"><em>Figure 4: Experimental variogram (black dots) with all seven candidate theoretical models fitted.</em></p>
+<p style="text-align: center;"><em>Figure 4: Isotropic experimental variogram (black dots) with all seven candidate theoretical models fitted.</em></p>
+<p><strong>On the choice of isotropy fitting here:</strong> Moderate degree of anisotropy were observed from the Directional (Anisotropy) variograms. However, the isotropic variogram was retained for model fitting, as the primary objective is to establish a baseline spatial correlation structure suitable for covariance matrix construction. In applications where directional dependence is critical, such as oriented fibre composites or laminated structures, an anisotropic model should be pursued instead.</p>
 <h4 id="ranking-and-selection"><a class="toclink" href="#ranking-and-selection">Ranking and Selection</a></h4>
 <p>The pseudo-R² score used here is:</p>
 <div class="math">$$
 R^2 = 1 - \frac{\sum_i \left[\hat{\gamma}(h_i) - \gamma_{\text{model}}(h_i)\right]^2}{\sum_i \left[\hat{\gamma}(h_i) - \bar{\gamma}\right]^2}
 $$</div>
-<p>A score of 1.0 is a perfect fit; a score below 0 means the model is worse than simply using the mean. In practice, scores ranging between 0.6 - 0.90 are considered good for spatial data from engineering experiments.</p>
+<p>A score of 1.0 is a perfect fit; a score below 0 means the model is worse than simply using the mean. In practice, no universal threshold exists for spatial data, acceptable fit depends on data density, measurement noise, and the intended downstream application. The ranking is therefore used comparatively: the best-fitting model among the candidates is selected, with the absolute R² value serving as a secondary diagnostic rather than a hard acceptance criterion.</p>
 <p>The ranking step is not merely cosmetic. Different models impose different assumptions about the smoothness of the underlying field. Selecting the wrong model; say, a Gaussian for a rough field, can lead to a covariance matrix that produces unrealistically smooth simulated fields and, downstream, overly optimistic structural reliability estimates.</p>
 <hr/>
 <h3 id="interpretation-of-results"><a class="toclink" href="#interpretation-of-results">Interpretation of Results</a></h3>
@@ -414,7 +415,7 @@ $$</div>
 <li><strong>Variance</strong> <span class="math">\(\sigma^2\)</span>: the sill of the standardized variogram (should be ≈ 1.0 for standardized data)</li>
 <li><strong>Correlation length</strong> <span class="math">\(\ell\)</span>: the spatial scale over which the property is strongly correlated (i.e directly controls the dominant mode shapes in the KLE)</li>
 <li><strong>Nugget</strong> <span class="math">\(C_0\)</span>: if non-zero, signals either measurement noise or sub-grid-scale variability</li>
-<li><strong>Shape parameter</strong> <span class="math">\(\alpha\\)</span> (for Stable/Rational): controls field smoothness</li>
+<li><strong>Shape parameter</strong> <span class="math">\(\alpha\)</span> (for Stable/Rational): controls field smoothness</li>
 </ul>
 <p>These parameters connect directly to the covariance matrix construction described in the <a href="https://realyomi.github.io/computational-mechanics/covariance-matrix-computational-mechanics/">previous post</a>. In that post, we used a Rational model with <span class="math">\(\sigma^2 = 1.0\)</span>, <span class="math">\(\ell = 3.0\)</span>, <span class="math">\(\alpha = 1.14\)</span> (parameters that would emerge naturally from the fitting workflow described here).</p>
 <hr/>
@@ -539,7 +540,7 @@ References
         </div>
         <section id="article-sidebar" class="span2">
     <h4>Reading Time</h4>
-    <p>~8 min read</p>
+    <p>~9 min read</p>
             <h4>Published</h4>
             <time itemprop="dateCreated" datetime="2026-04-03T00:00:00+02:00">Fri 03 April 2026</time>
             <h4>Category</h4>
